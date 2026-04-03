@@ -22,6 +22,60 @@ This repository showcases a modern Internal Developer Portal (IDP) built with **
 
 ---
 
+## ☁️ GCP Setup & Permissions
+
+This portal uses **Workload Identity Federation (WIF)** to allow GitHub Actions to securely deploy resources to GCP without using long-lived JSON keys.
+
+### 1. Enable Required APIs
+Ensure the necessary APIs are enabled in your GCP project:
+```bash
+gcloud services enable \
+    iam.googleapis.com \
+    iamcredentials.googleapis.com \
+    cloudresourcemanager.googleapis.com \
+    sts.googleapis.com
+```
+
+### 2. Create a Service Account
+Create a dedicated service account that Terraform will use to manage resources:
+```bash
+gcloud iam service-accounts create backstage-terraform \
+    --display-name="Backstage Terraform Service Account"
+```
+
+### 2. Assign Required Roles
+Assign the `Editor` role (for demo purposes) or specific roles (Compute Admin, Kubernetes Engine Admin, etc.) to the service account:
+```bash
+gcloud projects add-iam-policy-binding [PROJECT_ID] \
+    --member="serviceAccount:backstage-terraform@[PROJECT_ID].iam.gserviceaccount.com" \
+    --role="roles/editor"
+```
+
+### 3. Configure Workload Identity Federation (WIF)
+Set up the trust relationship between GitHub and GCP:
+
+```bash
+# 1. Create the Workload Identity Pool
+gcloud iam workload-identity-pools create backstage-pool \
+    --location="global" \
+    --display-name="Backstage Pool"
+
+# 2. Create the OIDC Provider for GitHub
+gcloud iam workload-identity-pools providers create-oidc github-provider \
+    --location="global" \
+    --workload-identity-pool="backstage-pool" \
+    --display-name="GitHub Provider" \
+    --attribute-mapping="google.subject=assertion.sub,attribute.actor=assertion.actor,attribute.repository=assertion.repository" \
+    --issuer-uri="https://token.actions.githubusercontent.com"
+
+# 3. Allow GitHub Actions to impersonate the Service Account
+gcloud iam service-accounts add-iam-policy-binding backstage-terraform@[PROJECT_ID].iam.gserviceaccount.com \
+    --role="roles/iam.workloadIdentityUser" \
+    --member="principalSet://iam.googleapis.com/projects/[PROJECT_NUMBER]/locations/global/workloadIdentityPools/backstage-pool/attribute.repository/[GITHUB_ORG]/[REPO_NAME]"
+```
+
+---
+
 ## 🛠️ Setup & Local Development
 
 ### 1. Prerequisites
