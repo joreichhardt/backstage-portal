@@ -1,20 +1,19 @@
 app:
-  # Should be the same as backend.baseUrl when using the `app-backend` plugin.
   baseUrl: https://${APP_DOMAIN}
 
 backend:
-  # Note that the baseUrl should be the URL that the browser and other clients
-  # should use when communicating with the backend
   baseUrl: https://${APP_DOMAIN}
-  # The listener can also be expressed as a single <host>:<port> string.
   listen: ':7007'
+
+  auth:
+    keys:
+      - secret: ${BACKEND_SECRET}
 
   cors:
     origin: https://${APP_DOMAIN}
     methods: [GET, HEAD, PATCH, POST, PUT, DELETE]
     credentials: true
 
-  # config options: https://node-postgres.com/apis/client
   database:
     client: pg
     connection:
@@ -22,35 +21,90 @@ backend:
       port: ${POSTGRES_PORT}
       user: ${POSTGRES_USER}
       password: ${POSTGRES_PASSWORD}
-      # https://node-postgres.com/features/ssl
-      # you can set the sslmode configuration option via the `PGSSLMODE` environment variable
-      # see https://www.postgresql.org/docs/current/libpq-ssl.html Table 33.1. SSL Mode Descriptions (e.g. require)
+      # SSL via PGSSLMODE env var (e.g. PGSSLMODE=require)
       # ssl:
-      #   ca: # if you have a CA file and want to verify it you can uncomment this section
-      #     $file: <file-path>/ca/server.crt
+      #   ca:
+      #     $file: <path>/ca/server.crt
 
 auth:
   providers:
-    guest: {}
+    github:
+      production:
+        clientId: ${GITHUB_CLIENT_ID}
+        clientSecret: ${GITHUB_CLIENT_SECRET}
+
+techdocs:
+  builder: external
+  publisher:
+    type: googleGcs
+    googleGcs:
+      bucketName: ${TECHDOCS_GCS_BUCKET_NAME}
+
+permission:
+  enabled: true
 
 catalog:
-  # Overrides the default list locations from app-config.yaml as these contain example data.
-  # See https://backstage.io/docs/features/software-catalog/#adding-components-to-the-catalog for more details
-  # on how to get entities into the catalog.
   locations:
-    # Local example data, replace this with your production config, these are intended for demo use only.
-    # File locations are relative to the backend process, typically in a deployed context, such as in a Docker container, this will be the root
-    - type: file
-      target: ./examples/entities.yaml
-
-    # Local example template
-    - type: file
-      target: ./examples/template/template.yaml
-      rules:
-        - allow: [Template]
-
-    # Local example organizational data
+    # Organizational data
     - type: file
       target: ./examples/org.yaml
       rules:
         - allow: [User, Group]
+
+    # Example entities
+    - type: file
+      target: ./examples/entities.yaml
+
+    # GCP Infrastructure Templates
+    - type: file
+      target: ./examples/template/gcp-bucket.yaml
+      rules:
+        - allow: [Template]
+    - type: file
+      target: ./examples/template/gcp-gke.yaml
+      rules:
+        - allow: [Template]
+    - type: file
+      target: ./examples/template/gcp-compute.yaml
+      rules:
+        - allow: [Template]
+    - type: file
+      target: ./examples/template/gcp-cloud-sql.yaml
+      rules:
+        - allow: [Template]
+    - type: file
+      target: ./examples/template/gcp-vpc-peering.yaml
+      rules:
+        - allow: [Template]
+    - type: file
+      target: ./examples/template/gcp-dns.yaml
+      rules:
+        - allow: [Template]
+    - type: file
+      target: ./examples/template/gcp-api-gateway.yaml
+      rules:
+        - allow: [Template]
+    - type: file
+      target: ./examples/template/gcp-iam-role.yaml
+      rules:
+        - allow: [Template]
+    - type: file
+      target: ./examples/template/gcp-secret.yaml
+      rules:
+        - allow: [Template]
+    - type: file
+      target: ./examples/template/gcp-cert-manager.yaml
+      rules:
+        - allow: [Template]
+    - type: file
+      target: ./examples/template/gcp-domain-registration.yaml
+      rules:
+        - allow: [Template]
+    - type: file
+      target: ./examples/template/gcp-project-setup.yaml
+      rules:
+        - allow: [Template]
+    - type: file
+      target: ./examples/template/template.yaml
+      rules:
+        - allow: [Template]

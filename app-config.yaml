@@ -1,5 +1,5 @@
 app:
-  title: Scaffolded Backstage App
+  title: GCP Platform Engineering Portal
   baseUrl: http://localhost:3000
 
   # Enable all packages by default, this will discover packages from packages/app/package.json
@@ -12,16 +12,16 @@ app:
           path: /
 
 organization:
-  name: Hannes Albeiro the Paisa
+  name: Hannes Albeiro
 
 backend:
   # Used for enabling authentication, secret is shared by all backend plugins
   # See https://backstage.io/docs/auth/service-to-service-auth for
   # information on the format
-  # auth:
-  #   keys:
-  #     - secret: ${BACKEND_SECRET}
-  baseUrl: http://${APP_DOMAIN}:7007
+  auth:
+    keys:
+      - secret: ${BACKEND_SECRET}
+  baseUrl: http://localhost:7007
   listen:
     port: 7007
     # Uncomment the following host directive to bind to specific interfaces
@@ -177,5 +177,4 @@ kubernetes:
 
 # see https://backstage.io/docs/permissions/getting-started for more on the permission framework
 permission:
-  # setting this to `false` will disable permissions
-  enabled: false
+  enabled: true
