@@ -1,0 +1,64 @@
+apiVersion: scaffolder.backstage.io/v1beta3
+kind: Template
+metadata:
+  name: gcp-vpc-peering
+  title: Create VPC Peering
+  description: Verbindet zwei GCP VPC Netzwerke miteinander
+spec:
+  owner: user:guest
+  type: resource
+
+  parameters:
+    - title: Peering Details
+      required:
+        - peeringName
+        - localNetwork
+        - peerNetwork
+      properties:
+        peeringName:
+          title: Name des Peerings
+          type: string
+        localNetwork:
+          title: Lokales Netzwerk (Self Link oder Name)
+          type: string
+        peerNetwork:
+          title: Remote Netzwerk (Self Link oder Name)
+          type: string
+        exportRoutes:
+          title: Exportiere Custom Routes?
+          type: boolean
+          default: true
+        importRoutes:
+          title: Importiere Custom Routes?
+          type: boolean
+          default: true
+
+    - title: Choose a location
+      required:
+        - repoUrl
+      properties:
+        repoUrl:
+          title: Repository Location
+          type: string
+          ui:field: RepoUrlPicker
+
+  steps:
+    - id: template
+      name: Generating VPC Peering Terraform
+      action: fetch:template
+      input:
+        url: ./vpc-peering-content
+        values:
+          peeringName: ${{ parameters.peeringName }}
+          localNetwork: ${{ parameters.localNetwork }}
+          peerNetwork: ${{ parameters.peerNetwork }}
+          exportRoutes: ${{ parameters.exportRoutes }}
+          importRoutes: ${{ parameters.importRoutes }}
+
+    - id: publish
+      name: Publishing to GitHub
+      action: publish:github
+      input:
+        allowedHosts: ['github.com']
+        description: VPC Peering Infrastructure
+        repoUrl: ${{ parameters.repoUrl }}

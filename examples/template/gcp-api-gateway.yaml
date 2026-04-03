@@ -1,0 +1,59 @@
+apiVersion: scaffolder.backstage.io/v1beta3
+kind: Template
+metadata:
+  name: gcp-api-gateway
+  title: Create API Gateway
+  description: Erstellt ein GCP API Gateway für deine Cloud-Dienste
+spec:
+  owner: user:guest
+  type: service
+
+  parameters:
+    - title: Gateway Details
+      required:
+        - gatewayId
+        - apiId
+        - projectId
+      properties:
+        gatewayId:
+          title: Gateway ID
+          type: string
+        apiId:
+          title: API ID
+          type: string
+        projectId:
+          title: GCP Project ID
+          type: string
+        region:
+          title: Region
+          type: string
+          default: us-central1
+
+    - title: Choose a location
+      required:
+        - repoUrl
+      properties:
+        repoUrl:
+          title: Repository Location
+          type: string
+          ui:field: RepoUrlPicker
+
+  steps:
+    - id: template
+      name: Generating API Gateway Terraform
+      action: fetch:template
+      input:
+        url: ./api-gateway-content
+        values:
+          gatewayId: ${{ parameters.gatewayId }}
+          apiId: ${{ parameters.apiId }}
+          projectId: ${{ parameters.projectId }}
+          region: ${{ parameters.region }}
+
+    - id: publish
+      name: Publishing to GitHub
+      action: publish:github
+      input:
+        allowedHosts: ['github.com']
+        description: API Gateway Infrastructure
+        repoUrl: ${{ parameters.repoUrl }}

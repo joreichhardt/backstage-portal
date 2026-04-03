@@ -1,0 +1,99 @@
+apiVersion: scaffolder.backstage.io/v1beta3
+kind: Template
+metadata:
+  name: gcp-bucket-template
+  title: Create GCP Cloud Storage Bucket
+  description: Erstellt einen neuen GCP Bucket über Terraform in GitHub
+spec:
+  owner: user:guest
+  type: service
+
+  parameters:
+    - title: Bucket Details
+      required:
+        - bucketName
+        - region
+      properties:
+        bucketName:
+          title: Name of the Bucket
+          type: string
+          description: Unique name for the GCP bucket
+        region:
+          title: GCP Region
+          type: string
+          default: europe-west3
+          enum:
+            - us-central1
+            - europe-west3
+            - asia-east1
+        storageClass:
+          title: Storage Class
+          type: string
+          default: STANDARD
+          enum:
+            - STANDARD
+            - NEARLINE
+            - COLDLINE
+            - ARCHIVE
+
+    - title: Choose a location
+      required:
+        - repoUrl
+      properties:
+        repoUrl:
+          title: Repository Location
+          type: string
+          ui:field: RepoUrlPicker
+          ui:options:
+            allowedHosts:
+              - github.com
+
+  steps:
+    - id: template
+      name: Generating Terraform Files
+      action: fetch:template
+      input:
+        url: ./content
+        values:
+          bucketName: ${{ parameters.bucketName }}
+          region: ${{ parameters.region }}
+          storageClass: ${{ parameters.storageClass }}
+
+    - id: publish
+      name: Publishing to GitHub
+      action: publish:github
+      input:
+        allowedHosts: ['github.com']
+        description: This is ${{ parameters.bucketName }} GCP Bucket
+        repoUrl: ${{ parameters.repoUrl }}
+
+    - id: github-secret-provider
+      name: Configuring GCP Workload Identity Provider
+      action: github:actions:secret:set
+      input:
+        repoUrl: ${{ parameters.repoUrl }}
+        name: GCP_WORKLOAD_IDENTITY_PROVIDER
+        value: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+
+    - id: github-secret-email
+      name: Configuring GCP Service Account Email
+      action: github:actions:secret:set
+      input:
+        repoUrl: ${{ parameters.repoUrl }}
+        name: GCP_SERVICE_ACCOUNT_EMAIL
+        value: ${{ secrets.GCP_SERVICE_ACCOUNT_EMAIL }}
+
+    - id: register
+      name: Registering in Catalog
+      action: catalog:register
+      input:
+        repoContentsUrl: ${{ steps['publish'].output.repoContentsUrl }}
+        catalogInfoPath: '/catalog-info.yaml'
+
+  output:
+    links:
+      - title: Repository
+        url: ${{ steps['publish'].output.remoteUrl }}
+      - title: Open in Catalog
+        icon: catalog
+        entityRef: ${{ steps['register'].output.entityRef }}

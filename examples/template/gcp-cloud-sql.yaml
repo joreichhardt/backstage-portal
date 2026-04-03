@@ -1,0 +1,122 @@
+apiVersion: scaffolder.backstage.io/v1beta3
+kind: Template
+metadata:
+  name: gcp-cloud-sql
+  title: Create Cloud SQL Instance
+  description: Erstellt eine verwaltete Google Cloud SQL Instanz (Postgres oder MySQL)
+spec:
+  owner: user:guest
+  type: resource
+
+  parameters:
+    - title: Database Details
+      required:
+        - instanceName
+        - databaseVersion
+        - projectId
+      properties:
+        instanceName:
+          title: Instance Name
+          type: string
+          description: Name der SQL-Instanz
+        databaseVersion:
+          title: Database Version
+          type: string
+          default: POSTGRES_15
+          enum:
+            - POSTGRES_15
+            - POSTGRES_14
+            - MYSQL_8_0
+            - SQLSERVER_2019_STANDARD
+        tier:
+          title: Machine Type (Tier)
+          type: string
+          default: db-f1-micro
+          description: z.B. db-f1-micro, db-g1-small, db-custom-2-7680
+        region:
+          title: Region
+          type: string
+          default: europe-west3
+        projectId:
+          title: GCP Project ID
+          type: string
+
+    - title: Initial Database & User
+      required:
+        - dbName
+        - userName
+      properties:
+        dbName:
+          title: Database Name
+          type: string
+          default: main_db
+        userName:
+          title: Admin User Name
+          type: string
+          default: admin_user
+
+    - title: Choose a location
+      required:
+        - repoUrl
+      properties:
+        repoUrl:
+          title: Repository Location
+          type: string
+          ui:field: RepoUrlPicker
+          ui:options:
+            allowedHosts:
+              - github.com
+
+  steps:
+    - id: template
+      name: Generating Cloud SQL Terraform
+      action: fetch:template
+      input:
+        url: ./cloud-sql-content
+        values:
+          instanceName: ${{ parameters.instanceName }}
+          databaseVersion: ${{ parameters.databaseVersion }}
+          tier: ${{ parameters.tier }}
+          region: ${{ parameters.region }}
+          projectId: ${{ parameters.projectId }}
+          dbName: ${{ parameters.dbName }}
+          userName: ${{ parameters.userName }}
+
+    - id: publish
+      name: Publishing to GitHub
+      action: publish:github
+      input:
+        allowedHosts: ['github.com']
+        description: Cloud SQL Infrastructure for ${{ parameters.instanceName }}
+        repoUrl: ${{ parameters.repoUrl }}
+
+    - id: github-secret-provider
+      name: Configuring GCP Workload Identity Provider
+      action: github:actions:secret:set
+      input:
+        repoUrl: ${{ parameters.repoUrl }}
+        name: GCP_WORKLOAD_IDENTITY_PROVIDER
+        value: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+
+    - id: github-secret-email
+      name: Configuring GCP Service Account Email
+      action: github:actions:secret:set
+      input:
+        repoUrl: ${{ parameters.repoUrl }}
+        name: GCP_SERVICE_ACCOUNT_EMAIL
+        value: ${{ secrets.GCP_SERVICE_ACCOUNT_EMAIL }}
+
+    - id: register
+      name: Registering in Catalog
+      action: catalog:register
+      input:
+        repoContentsUrl: ${{ steps['publish'].output.repoContentsUrl }}
+        catalogInfoPath: '/catalog-info.yaml'
+
+  output:
+    links:
+      - title: Repository
+        url: ${{ steps['publish'].output.remoteUrl }}
+      - title: Open in Catalog
+        icon: catalog
+        entityRef: ${{ steps['register'].output.entityRef }}

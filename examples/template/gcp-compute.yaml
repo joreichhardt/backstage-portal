@@ -1,0 +1,81 @@
+apiVersion: scaffolder.backstage.io/v1beta3
+kind: Template
+metadata:
+  name: gcp-compute
+  title: Create Compute Instance
+  description: Erstellt eine neue virtuelle Maschine in der Google Cloud
+spec:
+  owner: user:guest
+  type: service
+
+  parameters:
+    - title: VM Details
+      required:
+        - instanceName
+        - zone
+      properties:
+        instanceName:
+          title: Name der Instanz
+          type: string
+        zone:
+          title: GCP Zone
+          type: string
+          default: europe-west3-a
+        machineType:
+          title: Machine Type
+          type: string
+          default: e2-medium
+        image:
+          title: OS Image
+          type: string
+          default: debian-cloud/debian-11
+        network:
+          title: VPC Netzwerk
+          type: string
+          default: default
+
+    - title: Choose a location
+      required:
+        - repoUrl
+      properties:
+        repoUrl:
+          title: Repository Location
+          type: string
+          ui:field: RepoUrlPicker
+
+  steps:
+    - id: template
+      name: Generating VM Terraform
+      action: fetch:template
+      input:
+        url: ./compute-content
+        values:
+          instanceName: ${{ parameters.instanceName }}
+          zone: ${{ parameters.zone }}
+          machineType: ${{ parameters.machineType }}
+          image: ${{ parameters.image }}
+          network: ${{ parameters.network }}
+
+    - id: publish
+      name: Publishing to GitHub
+      action: publish:github
+      input:
+        allowedHosts: ['github.com']
+        description: Compute Instance infrastructure
+        repoUrl: ${{ parameters.repoUrl }}
+
+    - id: github-secret-provider
+      name: Configuring GCP Workload Identity Provider
+      action: github:actions:secret:set
+      input:
+        repoUrl: ${{ parameters.repoUrl }}
+        name: GCP_WORKLOAD_IDENTITY_PROVIDER
+        value: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+
+    - id: github-secret-email
+      name: Configuring GCP Service Account Email
+      action: github:actions:secret:set
+      input:
+        repoUrl: ${{ parameters.repoUrl }}
+        name: GCP_SERVICE_ACCOUNT_EMAIL
+        value: ${{ secrets.GCP_SERVICE_ACCOUNT_EMAIL }}

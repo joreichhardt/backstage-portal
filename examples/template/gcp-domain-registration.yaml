@@ -1,0 +1,49 @@
+apiVersion: scaffolder.backstage.io/v1beta3
+kind: Template
+metadata:
+  name: gcp-domain-registration
+  title: Register GCP Domain
+  description: Registriert eine neue Domain über Cloud Domains
+spec:
+  owner: user:guest
+  type: resource
+
+  parameters:
+    - title: Domain Details
+      required:
+        - domainName
+        - projectId
+      properties:
+        domainName:
+          title: Domain Name (e.g. example.com)
+          type: string
+        projectId:
+          title: GCP Project ID
+          type: string
+
+    - title: Choose a location
+      required:
+        - repoUrl
+      properties:
+        repoUrl:
+          title: Repository Location
+          type: string
+          ui:field: RepoUrlPicker
+
+  steps:
+    - id: template
+      name: Generating Domain Registration Terraform
+      action: fetch:template
+      input:
+        url: ./domain-content
+        values:
+          domainName: ${{ parameters.domainName }}
+          projectId: ${{ parameters.projectId }}
+
+    - id: publish
+      name: Publishing to GitHub
+      action: publish:github
+      input:
+        allowedHosts: ['github.com']
+        description: GCP Domain Registration
+        repoUrl: ${{ parameters.repoUrl }}

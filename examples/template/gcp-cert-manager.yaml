@@ -1,0 +1,50 @@
+apiVersion: scaffolder.backstage.io/v1beta3
+kind: Template
+metadata:
+  name: gcp-cert-manager
+  title: Setup Cert Manager (GKE)
+  description: Installiert Cert-Manager und Let's Encrypt in einem GKE Cluster
+spec:
+  owner: user:guest
+  type: service
+
+  parameters:
+    - title: Cert Manager Details
+      required:
+        - email
+        - clusterName
+      properties:
+        email:
+          title: Let's Encrypt Email
+          type: string
+          description: Für Benachrichtigungen von Let's Encrypt
+        clusterName:
+          title: Target GKE Cluster
+          type: string
+
+    - title: Choose a location
+      required:
+        - repoUrl
+      properties:
+        repoUrl:
+          title: Repository Location
+          type: string
+          ui:field: RepoUrlPicker
+
+  steps:
+    - id: template
+      name: Generating Cert Manager Helm/TF
+      action: fetch:template
+      input:
+        url: ./cert-manager-content
+        values:
+          email: ${{ parameters.email }}
+          clusterName: ${{ parameters.clusterName }}
+
+    - id: publish
+      name: Publishing to GitHub
+      action: publish:github
+      input:
+        allowedHosts: ['github.com']
+        description: Cert Manager setup for GKE
+        repoUrl: ${{ parameters.repoUrl }}

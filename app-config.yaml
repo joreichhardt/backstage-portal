@@ -12,7 +12,7 @@ app:
           path: /
 
 organization:
-  name: My Company
+  name: Hannes Albeiro the Paisa
 
 backend:
   # Used for enabling authentication, secret is shared by all backend plugins
@@ -38,7 +38,8 @@ backend:
   # The production database configuration is stored in app-config.production.yaml
   database:
     client: better-sqlite3
-    connection: ':memory:'
+    connection:
+      directory: './data'
   # workingDirectory: /tmp # Use this to configure a working directory for the scaffolder, defaults to the OS temp-dir
 
 integrations:
@@ -76,6 +77,10 @@ auth:
   providers:
     # See https://backstage.io/docs/auth/guest/provider
     guest: {}
+    github:
+      development:
+        clientId: ${GITHUB_CLIENT_ID}
+        clientSecret: ${GITHUB_CLIENT_SECRET}
 
 scaffolder:
   # see https://backstage.io/docs/features/software-templates/configuration for software template options
@@ -94,6 +99,54 @@ catalog:
     # Local example template
     - type: file
       target: ../../examples/template/template.yaml
+      rules:
+        - allow: [Template]
+    - type: file
+      target: ../../examples/template/gcp-bucket.yaml
+      rules:
+        - allow: [Template]
+    - type: file
+      target: ../../examples/template/gcp-gke.yaml
+      rules:
+        - allow: [Template]
+    - type: file
+      target: ../../examples/template/gcp-project-setup.yaml
+      rules:
+        - allow: [Template]
+    - type: file
+      target: ../../examples/template/gcp-secret.yaml
+      rules:
+        - allow: [Template]
+    - type: file
+      target: ../../examples/template/gcp-vpc-peering.yaml
+      rules:
+        - allow: [Template]
+    - type: file
+      target: ../../examples/template/gcp-iam-role.yaml
+      rules:
+        - allow: [Template]
+    - type: file
+      target: ../../examples/template/gcp-compute.yaml
+      rules:
+        - allow: [Template]
+    - type: file
+      target: ../../examples/template/gcp-dns.yaml
+      rules:
+        - allow: [Template]
+    - type: file
+      target: ../../examples/template/gcp-api-gateway.yaml
+      rules:
+        - allow: [Template]
+    - type: file
+      target: ../../examples/template/gcp-cert-manager.yaml
+      rules:
+        - allow: [Template]
+    - type: file
+      target: ../../examples/template/gcp-domain-registration.yaml
+      rules:
+        - allow: [Template]
+    - type: file
+      target: ../../examples/template/gcp-cloud-sql.yaml
       rules:
         - allow: [Template]
 
@@ -115,8 +168,14 @@ catalog:
 
 kubernetes:
   # see https://backstage.io/docs/features/kubernetes/configuration for kubernetes configuration options
+  serviceLocatorMethod:
+    type: multiTenant
+  clusterLocatorMethods:
+    - type: catalog
+      filter:
+        metadata.annotations.'kubernetes.io/api-server': '*'
 
 # see https://backstage.io/docs/permissions/getting-started for more on the permission framework
 permission:
   # setting this to `false` will disable permissions
-  enabled: true
+  enabled: false

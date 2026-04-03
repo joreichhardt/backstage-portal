@@ -1,0 +1,57 @@
+apiVersion: scaffolder.backstage.io/v1beta3
+kind: Template
+metadata:
+  name: gcp-iam-role
+  title: Assign IAM Role
+  description: Erteilt Berechtigungen für einen Nutzer oder Service Account in GCP
+spec:
+  owner: user:guest
+  type: resource
+
+  parameters:
+    - title: IAM Details
+      required:
+        - projectId
+        - role
+        - member
+      properties:
+        projectId:
+          title: GCP Project ID
+          type: string
+        role:
+          title: IAM Role
+          type: string
+          default: roles/viewer
+          description: z.B. roles/storage.admin, roles/compute.viewer
+        member:
+          title: Member (User or Service Account)
+          type: string
+          description: z.B. user:email@company.com oder serviceAccount:sa-name@project.iam.gserviceaccount.com
+
+    - title: Choose a location
+      required:
+        - repoUrl
+      properties:
+        repoUrl:
+          title: Repository Location
+          type: string
+          ui:field: RepoUrlPicker
+
+  steps:
+    - id: template
+      name: Generating IAM Role Terraform
+      action: fetch:template
+      input:
+        url: ./iam-role-content
+        values:
+          projectId: ${{ parameters.projectId }}
+          role: ${{ parameters.role }}
+          member: ${{ parameters.member }}
+
+    - id: publish
+      name: Publishing to GitHub
+      action: publish:github
+      input:
+        allowedHosts: ['github.com']
+        description: IAM Role infrastructure
+        repoUrl: ${{ parameters.repoUrl }}

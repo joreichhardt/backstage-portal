@@ -1,0 +1,12 @@
+apiVersion: backstage.io/v1alpha1
+kind: Resource
+metadata:
+  name: ${{ values.clusterName }}
+  description: GKE Cluster created via Scaffolder
+  annotations:
+    # Backstage erkennt diesen Cluster automatisch für das Kubernetes Plugin:
+    kubernetes.io/api-server: "https://GKE_API_SERVER_URL" # Muss nach Deployment gefüllt werden
+    google.com/project-id: ${{ values.projectId }}
+spec:
+  type: kubernetes-cluster
+  owner: user:guest

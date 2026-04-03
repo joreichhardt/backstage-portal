@@ -1,0 +1,61 @@
+apiVersion: scaffolder.backstage.io/v1beta3
+kind: Template
+metadata:
+  name: gcp-project-setup
+  title: Setup GCP Project APIs
+  description: Aktiviert notwendige APIs (Compute, GKE, Secret Manager) in einem GCP Projekt
+spec:
+  owner: user:guest
+  type: service
+
+  parameters:
+    - title: Project Details
+      required:
+        - projectId
+      properties:
+        projectId:
+          title: GCP Project ID
+          type: string
+        enableGKE:
+          title: Enable GKE API?
+          type: boolean
+          default: true
+        enableSecretManager:
+          title: Enable Secret Manager API?
+          type: boolean
+          default: true
+
+    - title: Choose a location
+      required:
+        - repoUrl
+      properties:
+        repoUrl:
+          title: Repository Location
+          type: string
+          ui:field: RepoUrlPicker
+
+  steps:
+    - id: template
+      name: Generating API Activation Terraform
+      action: fetch:template
+      input:
+        url: ./project-setup-content
+        values:
+          projectId: ${{ parameters.projectId }}
+          enableGKE: ${{ parameters.enableGKE }}
+          enableSecretManager: ${{ parameters.enableSecretManager }}
+
+    - id: publish
+      name: Publishing to GitHub
+      action: publish:github
+      input:
+        allowedHosts: ['github.com']
+        description: API Activation for GCP Project ${{ parameters.projectId }}
+        repoUrl: ${{ parameters.repoUrl }}
+
+    - id: register
+      name: Registering in Catalog
+      action: catalog:register
+      input:
+        repoContentsUrl: ${{ steps['publish'].output.repoContentsUrl }}
+        catalogInfoPath: '/catalog-info.yaml'

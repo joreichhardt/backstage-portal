@@ -1,0 +1,62 @@
+apiVersion: scaffolder.backstage.io/v1beta3
+kind: Template
+metadata:
+  name: gcp-dns
+  title: Create Cloud DNS Zone
+  description: Erstellt eine neue DNS-Zone in GCP
+spec:
+  owner: user:guest
+  type: resource
+
+  parameters:
+    - title: DNS Details
+      required:
+        - zoneName
+        - dnsName
+        - projectId
+      properties:
+        zoneName:
+          title: Name der Zone
+          type: string
+          description: Interner Name für GCP (z.B. my-app-zone)
+        dnsName:
+          title: DNS Name
+          type: string
+          description: Die eigentliche Domain (z.B. app.hannesalbeiro.com.)
+          default: app.hannesalbeiro.com.
+        projectId:
+          title: GCP Project ID
+          type: string
+        description:
+          title: Beschreibung
+          type: string
+          default: Created via Backstage
+
+    - title: Choose a location
+      required:
+        - repoUrl
+      properties:
+        repoUrl:
+          title: Repository Location
+          type: string
+          ui:field: RepoUrlPicker
+
+  steps:
+    - id: template
+      name: Generating DNS Terraform
+      action: fetch:template
+      input:
+        url: ./dns-content
+        values:
+          zoneName: ${{ parameters.zoneName }}
+          dnsName: ${{ parameters.dnsName }}
+          projectId: ${{ parameters.projectId }}
+          description: ${{ parameters.description }}
+
+    - id: publish
+      name: Publishing to GitHub
+      action: publish:github
+      input:
+        allowedHosts: ['github.com']
+        description: GCP Cloud DNS Infrastructure
+        repoUrl: ${{ parameters.repoUrl }}

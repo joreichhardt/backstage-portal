@@ -1,8 +1,11 @@
 apiVersion: backstage.io/v1alpha1
-kind: Component
+kind: Resource
 metadata:
-  name: ${{ values.name | dump }}
+  name: ${{ values.bucketName }}
+  description: GCP Bucket created via Scaffolder
+  annotations:
+    google.com/project-id: my-gcp-project # Hier könnte man den Projektnamen dynamisch einsetzen
 spec:
-  type: service
+  type: bucket
   owner: user:guest
-  lifecycle: experimental
+  system: gcp-infrastructure
