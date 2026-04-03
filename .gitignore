@@ -58,3 +58,9 @@ e2e-test-report/
 # Local data
 data/
 *.sqlite
+
+# Docker
+.dockerignore
+docker-compose.override.yml
+# Docker build context or logs (if any)
+*.log

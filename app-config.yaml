@@ -21,7 +21,7 @@ backend:
   # auth:
   #   keys:
   #     - secret: ${BACKEND_SECRET}
-  baseUrl: http://localhost:7007
+  baseUrl: http://${APP_DOMAIN}:7007
   listen:
     port: 7007
     # Uncomment the following host directive to bind to specific interfaces
